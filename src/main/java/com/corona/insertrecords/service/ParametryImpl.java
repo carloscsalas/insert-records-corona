@@ -1,8 +1,10 @@
 package com.corona.insertrecords.service;
 
 import com.corona.insertrecords.entity.Constants;
+import com.corona.insertrecords.entity.Corona;
 import com.corona.insertrecords.entity.RequestDto;
 import com.corona.insertrecords.entity.ResponseDto;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.http.HttpEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
@@ -10,13 +12,17 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.xssf.usermodel.XSSFCell;
+import org.apache.poi.xssf.usermodel.XSSFRow;
+import org.apache.poi.xssf.usermodel.XSSFSheet;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.json.JSONObject;
 import org.springframework.stereotype.Service;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.util.Arrays;
+import java.io.*;
+import java.util.*;
 
 @Service
 public class ParametryImpl implements IParametry{
@@ -29,6 +35,8 @@ public class ParametryImpl implements IParametry{
         try(CloseableHttpClient client = HttpClients.createDefault()){
             HttpPost httpPost = new HttpPost(Constants.URI_BASE.concat(Constants.URI_APX));
 //        String json = "{"id":1,"name":"John"}";
+           // String jsonResult = processXlsxFileToJson(requestDto.getTable_name());
+            String jsonResult = processXlsxToJson(requestDto.getTable_name());
             StringEntity entity = new StringEntity("json_request_in_string");
             httpPost.setEntity(entity);
             httpPost.setHeader("Accept", "application/json");
@@ -103,6 +111,131 @@ public class ParametryImpl implements IParametry{
 
     private String processXlsxFileToJson(String fileName){
 
+        try{
+            FileInputStream file = new FileInputStream(new File("D:\\WORKSPACE\\work\\records_corona.xlsx"));
+
+// Create Workbook instance holding reference to .xlsx file
+            XSSFWorkbook workbook = new XSSFWorkbook(file);
+
+// Get first/desired sheet from the workbook
+            XSSFSheet sheet = workbook.getSheetAt(0);
+
+            Corona corona;
+
+
+            Map<Object, Object> x = new LinkedHashMap<>();
+            List<Object> listObj = new ArrayList<>();
+// ignoring header for that I've +1 in loop
+            for(int i = sheet.getFirstRowNum() + 1; i<=sheet.getLastRowNum(); i++)
+            {
+                corona = new Corona();
+                Row row = sheet.getRow(i);
+                for (int j = row.getFirstCellNum(); j <= row.getLastCellNum(); j++) {
+                    Cell ce = row.getCell(j);
+                    if (j == 0) {
+                        // If you have Header in text It'll throw exception because it won't get
+                        // NumericValue
+                        //corona.setCodigo(Integer.parseInt(ce.getStringCellValue()));
+                        corona.setType_file(ce.getStringCellValue());
+                    }
+                    if (j == 1) {
+                        corona.setType_file(ce.getStringCellValue());
+                    }
+                    // Same for third column
+                    if (j == 2) {
+                        corona.setOrigin(ce.getStringCellValue());
+                    }
+                }
+                //x.put(somePojo.getName(), somePojo.getValue());
+                listObj.add(corona);
+            }
+
+// Object to JSON in String
+            ObjectMapper mapper = new ObjectMapper();
+// Object to JSON in file
+            mapper.writeValue(new File("C:\\some.json"),x);
+// Print in console
+            String jsonFromMap = mapper.writeValueAsString(x);
+            file.close();
+        }catch (Exception e){
+
+        }
+
         return null;
+    }
+
+    private String processXlsxToJson(String table) throws IOException {
+
+        List sheetData = new ArrayList();
+
+        FileInputStream fis = null;
+        try {
+            //Se carga el archivo, aqui cambia la direccion para cargar tu archivo
+            fis = new FileInputStream("D:\\WORKSPACE\\work\\records_corona.xlsx");
+
+            //Se obtiene el libro de Excel
+            XSSFWorkbook workbook = new XSSFWorkbook(fis);
+            // Se obtiene la hoja del libro donde estan los datos
+            XSSFSheet sheet = workbook.getSheetAt(0);
+
+            Iterator rows = sheet.rowIterator();
+            //While para recorrer filas
+            while (rows.hasNext()) {
+                XSSFRow row = (XSSFRow) rows.next();
+
+                Iterator cells = row.cellIterator();
+                List data = new ArrayList();
+                // While para recorrer celdas
+                while (cells.hasNext()) {
+                    XSSFCell cell = (XSSFCell) cells.next();
+                    data.add(cell);
+                }
+                //Se agregan al objeto List
+                sheetData.add(data);
+            }
+        } catch (IOException e) {
+            System.out.println("Error IOException en leer archivo Service Implement: " + e.getMessage());
+        } finally {
+            if (fis != null) {
+                fis.close();
+            }
+        }
+        // Termina try-catch-finally--------------------------------------------------------
+
+        JSONObject innerObj = null;
+        JSONObject  objFinal = new JSONObject();
+
+        for (int i = 1; i < sheetData.size(); i++) {
+
+            List list = (List) sheetData.get(i);
+            innerObj = new JSONObject();
+
+            for (int j = 0; j < list.size(); j++) {
+
+                Cell cell = (Cell) list.get(j);
+
+                //Se ponen nombres de las propiedades y se le asigna el valor dependiendo del indicador del arreglo
+                if(j==1){innerObj.put("codigo", cell.toString());}
+                if(j==2){innerObj.put("type_file", cell.toString());}
+                if(j==3){innerObj.put("origin", cell.toString());}
+
+            }
+            // Se van agregando todos los objetos JSON que se van generando
+            objFinal.put(String.valueOf(i), innerObj);
+        }
+
+        try {
+            // Se escribe el archivo .json
+            FileWriter file = new FileWriter("C:\\Users\\nestor.yzmaya\\Documents\\CreaJson\\resultado.json");
+
+            file.write(objFinal.toString());
+            file.flush();
+            file.close();
+
+        } catch (IOException e) {
+            System.out.println("Error al generar archivo JSON: "+e.getMessage());
+        }
+
+        return "";
     }
 }
