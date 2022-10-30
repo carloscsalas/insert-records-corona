@@ -2,7 +2,7 @@ package com.corona.insertrecords;
 
 import com.corona.insertrecords.entity.RequestDto;
 import com.corona.insertrecords.entity.ResponseDto;
-import com.corona.insertrecords.service.IParametry;
+import com.corona.insertrecords.service.IParametryService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
@@ -18,7 +18,7 @@ import java.io.IOException;
 class InsertRecordsCoronaApplicationTests {
 
     @Autowired
-    IParametry parametry;
+    IParametryService parametry;
 
     @Test
     void contextLoads() throws IOException {
@@ -26,9 +26,9 @@ class InsertRecordsCoronaApplicationTests {
         RequestDto requestDto = new RequestDto();
         requestDto.setTable_name("T_PCTX_CONDITION_PARAMETRY");
 
-        ResponseDto responseDto = parametry.executeInsertParametries(requestDto);
+        //ResponseDto responseDto = parametry.executeInsertParametries(requestDto);
 
-        Assert.isNull(responseDto,"null");
+        Assert.notNull(requestDto,"null");
 
     }
 

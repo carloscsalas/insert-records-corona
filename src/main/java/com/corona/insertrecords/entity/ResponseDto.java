@@ -1,11 +1,21 @@
 package com.corona.insertrecords.entity;
 
-import java.util.StringJoiner;
+
 
 public class ResponseDto {
 
     private Integer id;
     private String description;
+
+    private String table;
+
+    public String getTable() {
+        return table;
+    }
+
+    public void setTable(String table) {
+        this.table = table;
+    }
 
     public Integer getId() {
         return id;
@@ -25,10 +35,10 @@ public class ResponseDto {
 
     @Override
     public String toString() {
-        return new StringJoiner(", ", RequestDto.class.getSimpleName() + "[", "]")
-                .add("id=" + id)
-                .add("description='" + description + "'")
-                .toString();
+        return "ResponseDto{" +
+                "id=" + id +
+                ", description='" + description + '\'' +
+                ", table='" + table + '\'' +
+                '}';
     }
-
 }
